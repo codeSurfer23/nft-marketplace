@@ -8,6 +8,7 @@ import { openModal } from '../../../modules/modal/actions'
 import Actions from './Actions'
 import { MapDispatch, MapDispatchProps, MapStateProps } from './Actions.types'
 
+//
 const mapState = (state: RootState): MapStateProps => ({
   wallet: getWallet(state),
   order: getCurrentOrder(state),

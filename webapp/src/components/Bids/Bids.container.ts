@@ -16,7 +16,7 @@ import {
 } from '../../modules/bid/actions'
 import { MapStateProps, MapDispatch, MapDispatchProps } from './Bids.types'
 import Bids from './Bids'
-
+//
 const mapState = (state: RootState): MapStateProps => {
   return {
     wallet: getWallet(state),

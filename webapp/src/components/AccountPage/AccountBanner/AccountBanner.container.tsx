@@ -23,9 +23,9 @@ const mapState = (state: RootState): MapStateProps => {
   const viewAsGuest = getViewAsGuest(state)
   const address = getAddressFromUrl(state) || getAddressFromWallet(state)
   const isLoading = isLoadingType(getStoreLoading(state), FETCH_STORE_REQUEST)
-
+  // as keyof typeof obj2]
   let store: Store | undefined = address
-    ? getStoresByOwner(state)[address]
+    ? getStoresByOwner(state)[address as keyof typeof address]
     : undefined
 
   if (viewAsGuest) {
