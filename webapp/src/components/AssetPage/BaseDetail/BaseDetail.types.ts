@@ -14,7 +14,4 @@ export type Props = {
   className?: string
   actions?: ReactNode
   showDetails?: boolean
-  isFavoritesEnabled: boolean
 }
-
-export type MapStateProps = Pick<Props, 'isFavoritesEnabled'>

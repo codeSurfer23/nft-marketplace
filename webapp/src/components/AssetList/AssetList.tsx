@@ -1,12 +1,10 @@
 import React, { useCallback, useMemo, useEffect } from 'react'
 import { Card, Loader } from 'decentraland-ui'
-import { Item, NFTCategory } from '@dcl/schemas'
-import { T, t } from 'decentraland-dapps/dist/modules/translation/utils'
+import { NFTCategory } from '@dcl/schemas'
+import { t, T } from 'decentraland-dapps/dist/modules/translation/utils'
 import { getAnalytics } from 'decentraland-dapps/dist/modules/analytics/utils'
 import { getCategoryFromSection } from '../../modules/routing/search'
 import { getMaxQuerySize, MAX_PAGE } from '../../modules/vendor/api'
-import { AssetType } from '../../modules/asset/types'
-import { NFT } from '../../modules/nft/types'
 import * as events from '../../utils/events'
 import { InfiniteScroll } from '../InfiniteScroll'
 import { AssetCard } from '../AssetCard'
@@ -19,8 +17,7 @@ const AssetList = (props: Props) => {
     vendor,
     section,
     assetType,
-    items,
-    nfts,
+    assets,
     page,
     count,
     search,
@@ -31,8 +28,6 @@ const AssetList = (props: Props) => {
     isManager,
     onClearFilters
   } = props
-
-  const assets: (NFT | Item)[] = assetType === AssetType.ITEM ? items : nfts
 
   useEffect(() => {
     if (visitedLocations.length > 1) {
@@ -56,7 +51,6 @@ const AssetList = (props: Props) => {
     },
     [onBrowse]
   )
-
   const maxQuerySize = getMaxQuerySize(vendor)
 
   const hasMorePages =
@@ -67,7 +61,7 @@ const AssetList = (props: Props) => {
       return ''
     } else if (section) {
       if (isManager) {
-        return 'nft_list.simple_empty'
+        return 'nft_list.empty'
       }
 
       const isEmoteOrWearableSection = [
@@ -79,28 +73,67 @@ const AssetList = (props: Props) => {
         return search ? 'nft_list.empty_search' : 'nft_list.empty'
       }
     }
-    return 'nft_list.simple_empty'
+    return 'nft_list.empty'
   }, [assets.length, search, section, isManager])
 
+  const renderEmptyState = useCallback(() => {
+    return (
+      <div className="empty empty-assets">
+        <div className="watermelon" />
+        <span>
+          {t(`${emptyStateTranslationString}.title`, {
+            search
+          })}
+        </span>
+        <span>
+          <T
+            id={`${emptyStateTranslationString}.action`}
+            values={{
+              search,
+              'if-filters': (chunks: string) =>
+                hasFiltersEnabled ? chunks : '',
+              clearFilters: (chunks: string) => (
+                <button className="empty-actions" onClick={onClearFilters}>
+                  {chunks}
+                </button>
+              )
+            }}
+          />
+        </span>
+      </div>
+    )
+  }, [emptyStateTranslationString, hasFiltersEnabled, onClearFilters, search])
+
+  const shouldRenderEmptyState = useMemo(
+    () => assets.length === 0 && !isLoading,
+    [assets.length, isLoading]
+  )
+
+  const renderAssetCards = useCallback(
+    () =>
+      assets.map((assets, index) => (
+        <AssetCard
+          isManager={isManager}
+          key={assetType + '-' + assets.id + '-' + index}
+          asset={assets}
+        />
+      )),
+    [assetType, assets, isManager]
+  )
+
   return (
-    <>
+    <div className="AssetsList">
       {isLoading ? (
         <>
           <div className="overlay" />
-          <Loader size="massive" active className="asset-loader" />
+          <div className="transparentOverlay">
+            <Loader size="massive" active className="asset-loader" />
+          </div>
         </>
       ) : null}
-      <Card.Group>
-        {assets.length > 0
-          ? assets.map((assets, index) => (
-              <AssetCard
-                isManager={isManager}
-                key={assetType + '-' + assets.id + '-' + index}
-                asset={assets}
-              />
-            ))
-          : null}
-      </Card.Group>
+      {assets.length > 0 ? (
+        <Card.Group> {renderAssetCards()} </Card.Group>
+      ) : null}
       <InfiniteScroll
         page={page}
         hasMorePages={hasMorePages}
@@ -108,55 +141,9 @@ const AssetList = (props: Props) => {
         isLoading={isLoading}
         maxScrollPages={3}
       >
-        {assets.length === 0 && !isLoading ? (
-          <div className="empty">
-            <div className="watermelon" />
-
-            <T
-              id={emptyStateTranslationString}
-              values={{
-                search,
-                currentSection:
-                  assetType === AssetType.ITEM
-                    ? t('browse_page.primary_market_title').toLocaleLowerCase()
-                    : t(
-                        'browse_page.secondary_market_title'
-                      ).toLocaleLowerCase(),
-                section:
-                  assetType === AssetType.ITEM
-                    ? t(
-                        'browse_page.secondary_market_title'
-                      ).toLocaleLowerCase()
-                    : t('browse_page.primary_market_title').toLocaleLowerCase(),
-                searchStore: (chunks: string) => (
-                  <button
-                    className="empty-actions"
-                    onClick={() =>
-                      onBrowse({
-                        assetType:
-                          assetType === AssetType.ITEM
-                            ? AssetType.NFT
-                            : AssetType.ITEM
-                      })
-                    }
-                  >
-                    {chunks}
-                  </button>
-                ),
-                'if-filters': (chunks: string) =>
-                  hasFiltersEnabled ? chunks : '',
-                clearFilters: (chunks: string) => (
-                  <button className="empty-actions" onClick={onClearFilters}>
-                    {chunks}
-                  </button>
-                ),
-                br: () => <br />
-              }}
-            />
-          </div>
-        ) : null}
+        {shouldRenderEmptyState ? renderEmptyState() : null}
       </InfiniteScroll>
-    </>
+    </div>
   )
 }
 

@@ -8,12 +8,24 @@ import { loadingReducer } from 'decentraland-dapps/dist/modules/loading/reducer'
 import { NetworkGatewayType } from 'decentraland-ui'
 import { View } from '../ui/types'
 import {
+  FETCH_FAVORITED_ITEMS_SUCCESS,
+  fetchFavoritedItemsRequest,
+  fetchFavoritedItemsSuccess
+} from '../favorites/actions'
+import {
   buyItemFailure,
   buyItemRequest,
   buyItemSuccess,
   buyItemWithCardFailure,
   buyItemWithCardRequest,
   buyItemWithCardSuccess,
+  clearItemErrors,
+  FETCH_COLLECTION_ITEMS_SUCCESS,
+  FETCH_ITEM_SUCCESS,
+  FETCH_TRENDING_ITEMS_SUCCESS,
+  fetchCollectionItemsFailure,
+  fetchCollectionItemsRequest,
+  fetchCollectionItemsSuccess,
   fetchItemFailure,
   fetchItemRequest,
   fetchItemsFailure,
@@ -24,7 +36,7 @@ import {
   fetchTrendingItemsRequest,
   fetchTrendingItemsSuccess
 } from './actions'
-import { INITIAL_STATE, itemReducer } from './reducer'
+import { INITIAL_STATE, ItemState, itemReducer } from './reducer'
 
 const itemBrowseOptions = {
   view: View.MARKET,
@@ -72,6 +84,7 @@ const trendingItemsBatchSize = 20
 const requestActions = [
   fetchTrendingItemsRequest(trendingItemsBatchSize),
   fetchItemsRequest(itemBrowseOptions),
+  fetchCollectionItemsRequest({ contractAddresses: [], first: 10 }),
   fetchItemRequest(item.contractAddress, item.itemId),
   buyItemRequest(item),
   buyItemWithCardRequest(item),
@@ -109,6 +122,10 @@ const failureActions = [
     failure: fetchItemsFailure(anErrorMessage, itemBrowseOptions)
   },
   {
+    request: fetchCollectionItemsRequest({ contractAddresses: [], first: 10 }),
+    failure: fetchCollectionItemsFailure(anErrorMessage)
+  },
+  {
     request: fetchItemRequest(item.contractAddress, item.itemId),
     failure: fetchItemFailure(item.contractAddress, item.itemId, anErrorMessage)
   },
@@ -138,20 +155,87 @@ failureActions.forEach(action => {
 
 describe('when reducing the successful action of fetching items', () => {
   const requestAction = fetchItemsRequest(itemBrowseOptions)
-  const successAction = fetchItemsSuccess(
-    [item],
-    1,
-    itemBrowseOptions,
-    223423423
-  )
+  let successAction = fetchItemsSuccess([item], 1, itemBrowseOptions, 223423423)
 
+  let initialState = {
+    ...INITIAL_STATE,
+    data: { anotherId: anotherItem },
+    loading: loadingReducer([], requestAction)
+  }
+
+  describe('and the fetched items are not in the state', () => {
+    it('should return a state with the the loaded items and the loading state cleared', () => {
+      expect(itemReducer(initialState, successAction)).toEqual({
+        ...INITIAL_STATE,
+        loading: [],
+        data: { ...initialState.data, [item.id]: item }
+      })
+    })
+  })
+
+  describe('and the fetched items are in the state', () => {
+    let newItemData: Item
+    beforeEach(() => {
+      newItemData = {
+        minPrice: '1234'
+      } as Item
+      successAction = fetchItemsSuccess(
+        [{ ...item, ...newItemData }],
+        1,
+        itemBrowseOptions,
+        223423423
+      )
+      initialState = {
+        ...INITIAL_STATE,
+        data: { anotherId: anotherItem, [item.id]: item },
+        loading: loadingReducer([], requestAction)
+      }
+    })
+    it('should return a state with the old items merged with the new fetched items and the loading state cleared', () => {
+      expect(itemReducer(initialState, successAction)).toEqual({
+        ...INITIAL_STATE,
+        loading: [],
+        data: { ...initialState.data, [item.id]: { ...item, ...newItemData } }
+      })
+    })
+  })
+})
+
+describe.each([
+  [
+    FETCH_COLLECTION_ITEMS_SUCCESS,
+    fetchCollectionItemsRequest({ contractAddresses: [], first: 10 }),
+    fetchCollectionItemsSuccess([item])
+  ],
+  [
+    FETCH_ITEM_SUCCESS,
+    fetchItemRequest(item.contractAddress, item.itemId),
+    fetchItemSuccess(item)
+  ],
+  [
+    FETCH_TRENDING_ITEMS_SUCCESS,
+    fetchTrendingItemsRequest(trendingItemsBatchSize),
+    fetchTrendingItemsSuccess([item])
+  ],
+  [
+    FETCH_FAVORITED_ITEMS_SUCCESS,
+    fetchFavoritedItemsRequest({}),
+    fetchFavoritedItemsSuccess(
+      [item],
+      { [item.id]: Date.now() },
+      1,
+      {},
+      Date.now()
+    )
+  ]
+])('when reducing the %s action', (_action, requestAction, successAction) => {
   const initialState = {
     ...INITIAL_STATE,
     data: { anotherId: anotherItem },
     loading: loadingReducer([], requestAction)
   }
 
-  it('should return a state with the the loaded items and the loading state cleared', () => {
+  it('should return a state with the the loaded items with the fetched item and the loading state cleared', () => {
     expect(itemReducer(initialState, successAction)).toEqual({
       ...INITIAL_STATE,
       loading: [],
@@ -162,19 +246,43 @@ describe('when reducing the successful action of fetching items', () => {
 
 describe('when reducing the successful action of fetching an item', () => {
   const requestAction = fetchItemRequest(item.contractAddress, item.itemId)
-  const successAction = fetchItemSuccess(item)
+  let successAction = fetchItemSuccess(item)
 
-  const initialState = {
+  let initialState = {
     ...INITIAL_STATE,
     data: { anotherId: anotherItem },
     loading: loadingReducer([], requestAction)
   }
 
-  it('should return a state with the the loaded items plus the fetched item and the loading state cleared', () => {
-    expect(itemReducer(initialState, successAction)).toEqual({
-      ...INITIAL_STATE,
-      loading: [],
-      data: { ...initialState.data, [item.id]: item }
+  describe('and the fetched item is not in the state', () => {
+    it('should return a state with the loaded items, the fetched item and the loading state cleared', () => {
+      expect(itemReducer(initialState, successAction)).toEqual({
+        ...INITIAL_STATE,
+        loading: [],
+        data: { ...initialState.data, [item.id]: item }
+      })
+    })
+  })
+
+  describe('and the item is already in the state', () => {
+    let newItemData: Item
+    beforeEach(() => {
+      newItemData = {
+        minPrice: '1234'
+      } as Item
+      initialState = {
+        ...INITIAL_STATE,
+        data: { anotherId: anotherItem, [item.id]: item },
+        loading: loadingReducer([], requestAction)
+      }
+      successAction = fetchItemSuccess({ ...item, ...newItemData })
+    })
+    it('should return a state containing the old items merged with the new fetched item and the loading state cleared', () => {
+      expect(itemReducer(initialState, successAction)).toEqual({
+        ...INITIAL_STATE,
+        loading: [],
+        data: { ...initialState.data, [item.id]: { ...item, ...newItemData } }
+      })
     })
   })
 })
@@ -195,5 +303,22 @@ describe('when reducing the successful action of fetching trending items', () =>
       loading: [],
       data: { ...initialState.data, [item.id]: item }
     })
+  })
+})
+
+describe('when reducing a clear item errors action', () => {
+  let state: ItemState
+
+  beforeEach(() => {
+    state = {
+      ...INITIAL_STATE,
+      error: 'Some test error'
+    }
+  })
+
+  it('should set the error field as null', () => {
+    expect(itemReducer(state, clearItemErrors())).toEqual(
+      expect.objectContaining({ error: null })
+    )
   })
 })

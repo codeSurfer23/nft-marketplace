@@ -4,6 +4,7 @@ import classNames from 'classnames'
 import { Tabs, Mobile, Button, useMobileMediaQuery } from 'decentraland-ui'
 import { getAnalytics } from 'decentraland-dapps/dist/modules/analytics/utils'
 import { t } from 'decentraland-dapps/dist/modules/translation/utils'
+import { AssetStatusFilter } from '../../utils/filters'
 import * as decentraland from '../../modules/vendor/decentraland'
 import { locations } from '../../modules/routing/locations'
 import { VendorName } from '../../modules/vendor'
@@ -19,7 +20,7 @@ const Navigation = (props: Props) => {
     activeTab,
     isFullscreen,
     isCampaignBrowserEnabled,
-    isFavoritesEnabled,
+    isListV1Enabled,
     onOpenBuyManaWithFiatModal
   } = props
   const analytics = getAnalytics()
@@ -66,8 +67,8 @@ const Navigation = (props: Props) => {
               section: decentraland.Section.WEARABLES,
               vendor: VendorName.DECENTRALAND,
               page: 1,
-              sortBy: SortBy.RECENTLY_LISTED,
-              onlyOnSale: true
+              sortBy: SortBy.NEWEST,
+              status: AssetStatusFilter.ON_SALE
             })}
           >
             <Tabs.Tab active={activeTab === NavigationTab.COLLECTIBLES}>
@@ -84,13 +85,13 @@ const Navigation = (props: Props) => {
               {t('navigation.my_assets')}
             </Tabs.Tab>
           </Link>
-          {isFavoritesEnabled && (
-            <Link to={locations.defaultList()}>
-              <Tabs.Tab active={activeTab === NavigationTab.MY_LISTS}>
-                {t('navigation.my_lists')}
-              </Tabs.Tab>
-            </Link>
-          )}
+          <Link
+            to={isListV1Enabled ? locations.lists() : locations.defaultList()}
+          >
+            <Tabs.Tab active={activeTab === NavigationTab.MY_LISTS}>
+              {t('navigation.my_lists')}
+            </Tabs.Tab>
+          </Link>
           <Mobile>
             <Link to={locations.activity()}>
               <Tabs.Tab active={activeTab === NavigationTab.ACTIVITY}>

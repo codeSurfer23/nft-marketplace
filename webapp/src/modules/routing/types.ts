@@ -7,6 +7,7 @@ import {
   WearableGender,
   GenderFilterOption
 } from '@dcl/schemas'
+import { AssetStatusFilter } from '../../utils/filters'
 import { AssetType } from '../asset/types'
 import { VendorName } from '../vendor/types'
 import { View } from '../ui/types'
@@ -18,6 +19,7 @@ export enum SortBy {
   NEWEST = 'newest',
   RECENTLY_LISTED = 'recently_listed',
   CHEAPEST = 'cheapest',
+  MOST_EXPENSIVE = 'most_expensive',
   RECENTLY_REVIEWED = 'recently_reviewed',
   RECENTLY_SOLD = 'recently_sold',
   SIZE = 'size',
@@ -27,6 +29,11 @@ export enum SortBy {
   MIN_RENTAL_PRICE = 'min_rental_price',
   CHEAPEST_SALE = 'cheapest_sale',
   CHEAPEST_RENT = 'cheapest_rent'
+}
+
+export type SortByOption = {
+  value: SortBy
+  text: string
 }
 
 export enum SortDirection {
@@ -47,6 +54,7 @@ export type BrowseOptions = {
   isMap?: boolean
   isFullscreen?: boolean
   rarities?: Rarity[]
+  status?: AssetStatusFilter
   wearableGenders?: (WearableGender | GenderFilterOption)[]
   search?: string
   contracts?: string[]
@@ -66,4 +74,31 @@ export type BrowseOptions = {
   minDistanceToPlaza?: string
   maxDistanceToPlaza?: string
   adjacentToRoad?: boolean
+}
+
+export enum PageName {
+  HOME,
+  SIGN_IN,
+  SETTINGS,
+  LANDS,
+  COLLECTION,
+  BROWSE,
+  CAMPAIGN,
+  ACCOUNT,
+  LISTS,
+  LIST,
+  ACCOUNTS,
+  NFT_DETAIL,
+  MANAGE_NFT,
+  ITEM_DETAIL,
+  PARCEL_DETAIL,
+  ESTATE_DETAIL,
+  BUY_NFT,
+  BUY_ITEM,
+  BUY_NFT_STATUS,
+  BUY_ITEM_STATUS,
+  CANCEL_NFT_SALE,
+  TRANSFER_NFT,
+  BID_NFT,
+  ACTIVITY
 }

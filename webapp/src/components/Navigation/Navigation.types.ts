@@ -17,7 +17,7 @@ export enum NavigationTab {
 
 export type Props = {
   isCampaignBrowserEnabled: boolean
-  isFavoritesEnabled: boolean
+  isListV1Enabled: boolean
   isFullScreen?: boolean
   activeTab?: NavigationTab
   isFullscreen?: boolean
@@ -30,6 +30,6 @@ export type MapDispatch = Dispatch<OpenBuyManaWithFiatModalRequestAction>
 
 export type MapStateProps = Pick<
   Props,
-  'isCampaignBrowserEnabled' | 'isFavoritesEnabled' | 'isFullScreen'
+  'isCampaignBrowserEnabled' | 'isListV1Enabled' | 'isFullScreen'
 >
 export type MapDispatchProps = Pick<Props, 'onOpenBuyManaWithFiatModal'>
