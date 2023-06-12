@@ -1,4 +1,4 @@
-import { ChainId, Item } from '@dcl/schemas'
+import { ChainId, Item, ItemFilters } from '@dcl/schemas'
 import { NFTPurchase } from 'decentraland-dapps/dist/modules/gateway/types'
 import {
   buildTransactionPayload,
@@ -55,6 +55,32 @@ export type FetchTrendingItemsSuccessAction = ReturnType<
 >
 export type FetchTrendingItemsFailureAction = ReturnType<
   typeof fetchTrendingItemsFailure
+>
+
+// Fetch Collection Items
+
+export const FETCH_COLLECTION_ITEMS_REQUEST = '[Request] Fetch Collection Items'
+export const FETCH_COLLECTION_ITEMS_SUCCESS = '[Success] Fetch Collection Items'
+export const FETCH_COLLECTION_ITEMS_FAILURE = '[Failure] Fetch Collection Items'
+
+export const fetchCollectionItemsRequest = (
+  options: Pick<ItemFilters, 'first' | 'contractAddresses'>
+) => action(FETCH_COLLECTION_ITEMS_REQUEST, options)
+
+export const fetchCollectionItemsSuccess = (items: Item[]) =>
+  action(FETCH_COLLECTION_ITEMS_SUCCESS, { items })
+
+export const fetchCollectionItemsFailure = (error: string) =>
+  action(FETCH_COLLECTION_ITEMS_FAILURE, { error })
+
+export type FetchCollectionItemsRequestAction = ReturnType<
+  typeof fetchCollectionItemsRequest
+>
+export type FetchCollectionItemsSuccessAction = ReturnType<
+  typeof fetchCollectionItemsSuccess
+>
+export type FetchCollectionItemsFailureAction = ReturnType<
+  typeof fetchCollectionItemsFailure
 >
 
 // Buy Item
@@ -139,3 +165,7 @@ export const fetchItemFailure = (
 export type FetchItemRequestAction = ReturnType<typeof fetchItemRequest>
 export type FetchItemSuccessAction = ReturnType<typeof fetchItemSuccess>
 export type FetchItemFailureAction = ReturnType<typeof fetchItemFailure>
+
+export const CLEAR_ITEM_ERRORS = 'Clear Item Errors'
+export const clearItemErrors = () => action(CLEAR_ITEM_ERRORS)
+export type ClearItemErrorsAction = ReturnType<typeof clearItemErrors>

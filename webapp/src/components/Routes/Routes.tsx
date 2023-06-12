@@ -1,3 +1,4 @@
+import { useCallback } from 'react'
 import { Switch, Route, Redirect, RouteComponentProps } from 'react-router-dom'
 import { Center, Page } from 'decentraland-ui'
 import Intercom from 'decentraland-dapps/dist/components/Intercom'
@@ -26,11 +27,22 @@ import { ManageAssetPage } from '../ManageAssetPage'
 import { Footer } from '../Footer'
 import { CampaignBrowserPage } from '../Campaign/CampaignBrowserPage'
 import { StatusPage } from '../BuyPage/StatusPage'
+import { ListPage } from '../ListPage'
+import { ProtectedRoute } from '../ProtectedRoute'
 import { ListsPage } from '../ListsPage'
 import { Props } from './Routes.types'
 
-const Routes = ({ inMaintenance, isFavoritesEnabled }: Props) => {
+const Routes = ({ inMaintenance }: Props) => {
   const APP_ID = config.get('INTERCOM_APP_ID')
+  const renderItemAssetPage = useCallback(
+    () => <AssetPage type={AssetType.ITEM} />,
+    []
+  )
+
+  const renderNFTAssetPage = useCallback(
+    () => <AssetPage type={AssetType.NFT} />,
+    []
+  )
 
   if (inMaintenance) {
     return (
@@ -56,24 +68,33 @@ const Routes = ({ inMaintenance, isFavoritesEnabled }: Props) => {
           component={AccountPage}
         />
         <Route exact path={locations.account()} component={AccountPage} />
-        <Route
-          exact
-          path={locations.list()}
-          component={isFavoritesEnabled ? ListsPage : undefined}
-        />
+        <ProtectedRoute exact path={locations.lists()} component={ListsPage} />
+        <ProtectedRoute exact path={locations.list()} component={ListPage} />
         <Route exact path={locations.signIn()} component={SignInPage} />
-        <Route exact path={locations.sell()} component={SellPage} />
-        <Route exact path={locations.bid()} component={BidPage} />
-        <Route exact path={locations.cancel()} component={CancelSalePage} />
-        <Route exact path={locations.transfer()} component={TransferPage} />
+        <ProtectedRoute exact path={locations.sell()} component={SellPage} />
+        <ProtectedRoute exact path={locations.bid()} component={BidPage} />
+        <ProtectedRoute
+          exact
+          path={locations.cancel()}
+          component={CancelSalePage}
+        />
+        <ProtectedRoute
+          exact
+          path={locations.transfer()}
+          component={TransferPage}
+        />
         <Route exact path={locations.collection()} component={CollectionPage} />
-        <Route exact path={locations.manage()} component={ManageAssetPage} />
-        <Route
+        <ProtectedRoute
+          exact
+          path={locations.manage()}
+          component={ManageAssetPage}
+        />
+        <ProtectedRoute
           exact
           path={locations.buy(AssetType.NFT)}
           component={() => <BuyPage type={AssetType.NFT} />}
         />
-        <Route
+        <ProtectedRoute
           exact
           path={locations.buy(AssetType.ITEM)}
           component={() => <BuyPage type={AssetType.ITEM} />}
@@ -92,18 +113,18 @@ const Routes = ({ inMaintenance, isFavoritesEnabled }: Props) => {
             <StatusPage {...props} type={AssetType.ITEM} />
           )}
         />
-        <Route
+        <Route exact path={locations.nft()} component={renderNFTAssetPage} />
+        <Route exact path={locations.item()} component={renderItemAssetPage} />
+        <ProtectedRoute
           exact
-          path={locations.nft()}
-          component={() => <AssetPage type={AssetType.NFT} />}
+          path={locations.settings()}
+          component={SettingsPage}
         />
-        <Route
+        <ProtectedRoute
           exact
-          path={locations.item()}
-          component={() => <AssetPage type={AssetType.ITEM} />}
+          path={locations.activity()}
+          component={ActivityPage}
         />
-        <Route exact path={locations.settings()} component={SettingsPage} />
-        <Route exact path={locations.activity()} component={ActivityPage} />
         <Route exact path={locations.root()} component={HomePage} />
         <Route exact path={locations.parcel()} component={LegacyNFTPage} />
         <Route exact path={locations.estate()} component={LegacyNFTPage} />

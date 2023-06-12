@@ -12,18 +12,23 @@ import {
 } from 'decentraland-dapps/dist/modules/transaction/types'
 import { NFT } from '../../nft/types'
 import { RootState } from '../../reducer'
+import { FavoritesState } from '../../favorites/reducer'
 import { CLAIM_ASSET_TRANSACTION_SUBMITTED } from '../../rental/actions'
+import { FavoritesData, List } from '../../favorites/types'
+import { AssetType } from '../../asset/types'
+import { Section } from '../../vendor/decentraland/routing'
 import { View } from '../types'
 import { BrowseUIState } from './reducer'
 import {
+  getBrowseAssets,
+  getBrowseLists,
   getCount,
-  getItems,
-  getNFTs,
+  getItemsPickedByUser,
   getOnRentNFTsByLessor,
   getOnRentNFTsByTenant,
   getOnSaleElements,
-  getOnSaleItems,
   getOnSaleNFTs,
+  getPage,
   getState,
   getView,
   getWalletOwnedLands,
@@ -47,6 +52,7 @@ let rental: RentalListing
 let rentalCancelled: RentalListing
 let rentalExecutedByLessor: RentalListing
 let rentalExecutedByTenant: RentalListing
+let list: List
 
 beforeEach(() => {
   address = '0xaddress'
@@ -55,6 +61,13 @@ beforeEach(() => {
   nft = { id: '456', owner: address } as NFT
   order = { id: 'orderId ' } as Order
   nftOnSale = { id: '567', activeOrderId: order.id, owner: address } as NFT
+  list = {
+    id: 'listId',
+    name: 'listName',
+    description: 'listDescription',
+    userAddress: address,
+    createdAt: 123
+  }
   rental = {
     id: 'rentalId',
     status: RentalStatus.OPEN,
@@ -119,7 +132,9 @@ beforeEach(() => {
           nftWithExecutedRentByLessor.id,
           nftWithExecutedRentByTenant.id
         ],
+        listIds: [list.id],
         count: 1,
+        page: 1,
         view: View.MARKET
       } as BrowseUIState
     },
@@ -155,7 +170,12 @@ beforeEach(() => {
       data: {
         address
       }
-    }
+    },
+    favorites: {
+      data: { items: {}, lists: { [list.id]: list }, total: 0 },
+      loading: [],
+      error: null
+    } as FavoritesState
   } as RootState
 })
 
@@ -177,28 +197,9 @@ describe('when getting the count of the ui browse state', () => {
   })
 })
 
-describe('when getting the NFTs of the ui browse state', () => {
-  it('should retrieve the NFTs of the ui browse state', () => {
-    expect(getNFTs(rootState)).toStrictEqual([
-      nft,
-      nftOnSale,
-      nftWithOpenRent,
-      nftWithCancelledRent,
-      nftWithExecutedRentByLessor,
-      nftWithExecutedRentByTenant
-    ])
-  })
-})
-
-describe('when getting the Items of the ui browse state', () => {
-  it('should retrieve the Items of the ui browse state', () => {
-    expect(getItems(rootState)).toStrictEqual([item, itemOnSale])
-  })
-})
-
-describe('when getting the Items On Sale of the ui browse state', () => {
-  it('should retrieve the Items on sale of the ui browse state', () => {
-    expect(getOnSaleItems(rootState)).toStrictEqual([itemOnSale])
+describe('when getting the page of the ui browse state', () => {
+  it('should retrieve the count of the ui browse state', () => {
+    expect(getPage(rootState)).toBe(rootState.ui.browse.page)
   })
 })
 
@@ -375,5 +376,84 @@ describe('when getting if the claiming back transaction is pending', () => {
     it('should return true', () => {
       expect(isClaimingBackLandTransactionPending(state, nft)).toBeTruthy()
     })
+  })
+})
+
+describe('when getting the user favorited items of the ui browse state', () => {
+  let favoritedItems: Record<string, FavoritesData>
+  beforeEach(() => {
+    favoritedItems = {
+      [item.id]: { pickedByUser: true, count: 1 },
+      [itemOnSale.id]: { pickedByUser: false, count: 4 }
+    }
+  })
+
+  it('should retrieve the items that were favorited by the user', () => {
+    expect(
+      getItemsPickedByUser.resultFunc(favoritedItems, [item, itemOnSale])
+    ).toEqual([item])
+  })
+})
+
+describe('when getting the browse assets', () => {
+  let section: Section
+  let assetType: AssetType
+
+  describe('when the requested asset type is item', () => {
+    beforeEach(() => {
+      assetType = AssetType.ITEM
+    })
+
+    describe('and the section is My Lists', () => {
+      beforeEach(() => {
+        section = Section.LISTS
+        rootState.favorites.data.items = {
+          [item.id]: { pickedByUser: true, count: 1 },
+          [itemOnSale.id]: { pickedByUser: false, count: 4 }
+        }
+      })
+
+      it('should return all browsable items picked by the user', () => {
+        expect(getBrowseAssets(rootState, section, assetType)).toStrictEqual([
+          item
+        ])
+      })
+    })
+
+    describe('and the section not My Lists', () => {
+      beforeEach(() => {
+        section = Section.ENS
+      })
+
+      it('should return all the browsable items', () => {
+        expect(getBrowseAssets(rootState, section, assetType)).toStrictEqual([
+          item,
+          itemOnSale
+        ])
+      })
+    })
+  })
+
+  describe('when the requested asset type is nft', () => {
+    beforeEach(() => {
+      assetType = AssetType.NFT
+    })
+
+    it('should return all the browsable nfts', () => {
+      expect(getBrowseAssets(rootState, section, assetType)).toStrictEqual([
+        nft,
+        nftOnSale,
+        nftWithOpenRent,
+        nftWithCancelledRent,
+        nftWithExecutedRentByLessor,
+        nftWithExecutedRentByTenant
+      ])
+    })
+  })
+})
+
+describe('when getting the browse lists', () => {
+  it('should retrieve the lists of the ui browse state', () => {
+    expect(getBrowseLists(rootState)).toStrictEqual([list])
   })
 })

@@ -2,10 +2,6 @@
   display: flex;
 }
 
-.FavoritesCounter:hover {
-  cursor: pointer;
-}
-
 :global(.ui.cards a.card:hover) .bubble,
 :global(.ui.link.card:hover) .bubble,
 :global(.ui.link.cards .card:hover) .bubble,
@@ -17,14 +13,40 @@
   -o-transition: opacity .2s ease-out;
 }
 
+.FavoritesCounter :global(.ui.loader).loader {
+  margin: 0 .25rem 0 0;
+}
+
+.FavoritesCounter :global(.ui.loader:before) {
+  border-color: var(--text) !important;
+}
+
+.FavoritesCounter :global(.ui.loader:after) {
+  border-color: rgb(35, 31, 32, 0.4) transparent transparent !important;
+}
+
+.FavoritesCounter:hover :global(.ui.loader:after) {
+  border-color: rgba(35, 31, 32, 1) transparent transparent !important;
+}
+
 .FavoritesCounter:hover .bubble {
   background-color: rgba(35, 31, 32, 1);
 }
 
-.FavoritesCounter.Collapsed:hover .bubble {
+.FavoritesCounter.Collapsed .bubble:hover {
   box-shadow: 0px 0px 5px 2px rgba(255, 255, 255, 0.5);
 }
 
+.FavoritesCounter.Collapsed :global(.ui.loader).loader {
+  margin: 0;
+}
+
+.iconContainer {
+  min-width: 25px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 
 .FavoritesCounter.Collapsed {
   display: flex;
@@ -59,6 +81,7 @@
   -webkit-transition: background-color .5s;
   -moz-transition: background-color .5s;
   -o-transition: background-color .5s;
+  cursor: pointer;
 }
 
 .FavoritesCounter.Collapsed .bubble {
@@ -80,11 +103,14 @@
   text-transform: uppercase;
   text-align: center;
   text-decoration-line: underline;
+  text-underline-offset: 4px;
   text-transform: uppercase;
+  cursor: pointer;
 }
 
 .FavoritesCounter.Collapsed .counter.nonClickable {
   cursor: default;
+  text-decoration-line: none;
 }
 
 @media (max-width: 768px) {

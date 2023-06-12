@@ -1,153 +1,177 @@
-import signedFetch, { AuthIdentity } from 'decentraland-crypto-fetch'
-import { BaseAPI } from 'decentraland-dapps/dist/lib/api'
+import { BaseClient } from 'decentraland-dapps/dist/lib/BaseClient'
 import { config } from '../../../../config'
-import { FavoritedItemIds } from '../../../favorites/types'
-import { ItemFilters } from '../item/types'
-import { retryParams } from '../utils'
+import { isAPIError } from '../../../../lib/error'
+import { FavoritedItems } from '../../../favorites/types'
+import {
+  ListDetails,
+  ListOfLists,
+  ListsOptions,
+  PicksOptions,
+  UpdateOrCreateList
+} from './types'
 
 export const DEFAULT_FAVORITES_LIST_ID = config.get(
   'DEFAULT_FAVORITES_LIST_ID'
 )!
+
 export const MARKETPLACE_FAVORITES_SERVER_URL = config.get(
   'MARKETPLACE_FAVORITES_SERVER_URL'
 )!
 
-type PaginatedResponse<T> = {
-  results: T[]
-  total: number
-  page: number
-  pages: number
-  limit: number
-}
+const ALREADY_PICKED_STATUS_CODE = 422
 
-type HTTPBody<T> =
-  | {
-      ok: false
-      message: string
-      data?: object
-    }
-  | {
-      ok: true
-      data: PaginatedResponse<T>
+export class FavoritesAPI extends BaseClient {
+  private buildPaginationParameters({
+    first,
+    skip
+  }: {
+    first?: number
+    skip?: number
+  }): URLSearchParams {
+    const queryParams = new URLSearchParams()
+    if (first !== undefined) {
+      queryParams.append('limit', first.toString())
     }
 
-class FavoritesAPI extends BaseAPI {
+    if (skip !== undefined) {
+      queryParams.append('offset', skip.toString())
+    }
+    return queryParams
+  }
+
+  private buildPaginatedUrl(endpoint: string, options: PicksOptions): string {
+    const queryParams = this.buildPaginationParameters(options)
+    return endpoint + (queryParams.toString() && `?${queryParams.toString()}`)
+  }
+
+  private buildListsUrl(options: ListsOptions): string {
+    const queryParams = this.buildPaginationParameters(options)
+
+    if (options.sortDirection !== undefined) {
+      queryParams.append('sortDirection', options.sortDirection.toString())
+    }
+
+    if (options.sortBy !== undefined) {
+      queryParams.append('sortBy', options.sortBy.toString())
+    }
+
+    return (
+      '/v1/lists' + (queryParams.toString() && `?${queryParams.toString()}`)
+    )
+  }
+
   async getWhoFavoritedAnItem(
     itemId: string,
     limit: number,
     offset: number
   ): Promise<{ addresses: string[]; total: number }> {
-    const response = await fetch(
-      `${MARKETPLACE_FAVORITES_SERVER_URL}/picks/${itemId}?limit=${limit}&offset=${offset}`
+    const { results, total } = await this.fetch<{
+      results: { userAddress: string }[]
+      total: number
+    }>(
+      this.buildPaginatedUrl(`/v1/picks/${itemId}`, {
+        first: limit,
+        skip: offset
+      })
     )
 
-    const parsedResponse: HTTPBody<{
-      userAddress: string
-    }> = await response.json()
-
-    if (!response.ok || parsedResponse.ok === false) {
-      throw new Error(
-        parsedResponse.ok === false && parsedResponse.message !== undefined
-          ? parsedResponse.message
-          : 'Unknown error'
-      )
-    }
-
     return {
-      addresses: parsedResponse.data.results.map(pick => pick.userAddress),
-      total: parsedResponse.data.total
+      addresses: results.map(pick => pick.userAddress),
+      total
     }
   }
 
-  async pickItemAsFavorite(
-    itemId: string,
-    identity: AuthIdentity
-  ): Promise<void> {
-    const url =
-      MARKETPLACE_FAVORITES_SERVER_URL +
-      `/lists/${DEFAULT_FAVORITES_LIST_ID}/picks`
+  async pickItemAsFavorite(itemId: string): Promise<void> {
+    try {
+      await this.fetch(`/v1/lists/${DEFAULT_FAVORITES_LIST_ID}/picks`, {
+        method: 'POST',
+        body: JSON.stringify({ itemId }),
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+    } catch (error) {
+      if (isAPIError(error) && error.status === ALREADY_PICKED_STATUS_CODE)
+        return
 
-    const response = await signedFetch(url, {
-      method: 'POST',
-      identity,
-      body: JSON.stringify({ itemId }),
-      headers: {
-        'Content-Type': 'application/json'
+      throw error
+    }
+  }
+
+  async unpickItemAsFavorite(itemId: string): Promise<void> {
+    return this.fetch(
+      `/v1/lists/${DEFAULT_FAVORITES_LIST_ID}/picks/${itemId}`,
+      {
+        method: 'DELETE'
       }
-    })
-
-    if (!response.ok) {
-      throw new Error(
-        'The marketplace favorites server responded with a non-2XX status code.'
-      )
-    }
-  }
-
-  async unpickItemAsFavorite(
-    itemId: string,
-    identity: AuthIdentity
-  ): Promise<void> {
-    const url =
-      MARKETPLACE_FAVORITES_SERVER_URL +
-      `/lists/${DEFAULT_FAVORITES_LIST_ID}/picks/${itemId}`
-
-    const response = await signedFetch(url, {
-      method: 'DELETE',
-      identity
-    })
-
-    if (!response.ok) {
-      throw new Error(
-        'The marketplace favorites server responded with a non-2XX status code.'
-      )
-    }
+    )
   }
 
   async getPicksByList(
     listId: string,
-    filters: ItemFilters = {},
-    identity: AuthIdentity
+    filters: PicksOptions = {}
   ): Promise<{
-    results: FavoritedItemIds
+    results: FavoritedItems
     total: number
   }> {
-    try {
-      const queryParams = new URLSearchParams()
+    return this.fetch(
+      this.buildPaginatedUrl(`/v1/lists/${listId}/picks`, {
+        first: filters.first,
+        skip: filters.skip
+      })
+    )
+  }
 
-      if (filters.first) {
-        queryParams.append('limit', filters.first.toString())
-      }
+  async getLists(
+    options: ListsOptions = {}
+  ): Promise<{ results: ListOfLists[]; total: number }> {
+    return this.fetch(this.buildListsUrl(options))
+  }
 
-      if (filters.skip) {
-        queryParams.append('offset', filters.skip.toString())
-      }
+  async deleteList(listId: string): Promise<void> {
+    return this.fetch(`/v1/lists/${listId}`, { method: 'DELETE' })
+  }
 
-      const url =
-        MARKETPLACE_FAVORITES_SERVER_URL +
-        `/lists/${listId}/picks` +
-        (queryParams.toString() && `?${queryParams.toString()}`)
+  async getList(listId: string): Promise<ListDetails> {
+    return this.fetch(`/v1/lists/${listId}`)
+  }
 
-      const response = await signedFetch(url, { identity })
-
-      if (!response.ok) {
-        throw new Error(
-          'The marketplace favorites server responded with a non-2XX status code.'
-        )
-      }
-
-      const json = await response.json()
-      if (json.ok) {
-        return json.data
-      } else {
-        throw new Error(json.message)
-      }
-    } catch (error) {
-      throw new Error((error as Error).message)
+  async updateList(
+    listId: string,
+    updatedList: {
+      name?: string
+      isPrivate?: boolean
+      description?: string
     }
+  ): Promise<UpdateOrCreateList> {
+    return this.fetch(`/v1/lists/${listId}`, {
+      method: 'PUT',
+      body: JSON.stringify({
+        name: updatedList.name,
+        private: updatedList.isPrivate,
+        description: updatedList.description
+      }),
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    })
+  }
+
+  async createList({
+    name,
+    isPrivate,
+    description
+  }: {
+    name: string
+    isPrivate: boolean
+    description?: string
+  }): Promise<UpdateOrCreateList> {
+    return this.fetch('/v1/lists/', {
+      method: 'POST',
+      body: JSON.stringify({ name, private: isPrivate, description }),
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    })
   }
 }
-
-export const favoritesAPI = new FavoritesAPI(
-  MARKETPLACE_FAVORITES_SERVER_URL,
-  retryParams
-)

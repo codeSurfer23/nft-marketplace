@@ -1,3 +1,96 @@
-.header:global(.ui.header) {
-  margin-left: 24px
+.page {
+  display: flex;
+  flex-direction: column;
+}
+
+.subHeader {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 46px;
+}
+
+.subHeader .right {
+  display: inline-flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.subHeader .left {
+  font-size: 17px;
+}
+
+.cards:global(.ui.cards) {
+  flex: 1 1 auto;
+  margin: 0px;
+}
+
+.cardsGroup {
+  display: grid;
+  grid-gap: 12px;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr))
+}
+
+.errorContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  background: var(--secondary);
+  border-radius: 10px;
+  color: white;
+  text-align: center;
+  line-height: 24px;
+  text-align: center;
+}
+
+.errorImage {
+  background-image: url('../../images/could-not-load-list.svg');
+  background-repeat: no-repeat;
+  background-size: cover;
+  width: 80px;
+  height: 80px;
+}
+
+.errorActions {
+  margin-top: 40px;
+}
+
+@media (max-width: 767px) {
+  .createList .icon {
+    display: none;
+  }
+
+  .createList:global(.ui.small.primary.button) {
+    padding: 14px 62px;
+    font-size: 12px;
+    width: 97px;
+    height: 34px;
+    padding: 0px;
+    min-width: unset;
+  }
+
+  .sortBy {
+    display: none;
+  }
+
+  .subHeader {
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+  }
+
+  .subHeader .left {
+    font-size: 12px;
+  }
+  
+  .header:global(.ui.header) {
+    margin-left: 0px;
+    margin-bottom: 10px;
+  }
+
+  .cardsGroup :global(.ui.card) {
+    margin: auto;
+  }
 }

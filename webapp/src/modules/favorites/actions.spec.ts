@@ -2,6 +2,12 @@ import { Item, Network } from '@dcl/schemas'
 import { ItemBrowseOptions } from '../item/types'
 import { View } from '../ui/types'
 import {
+  ListDetails,
+  ListOfLists,
+  Permission,
+  UpdateOrCreateList
+} from '../vendor/decentraland/favorites/types'
+import {
   cancelPickItemAsFavorite,
   CANCEL_PICK_ITEM_AS_FAVORITE,
   fetchFavoritedItemsFailure,
@@ -27,13 +33,50 @@ import {
   unpickItemAsFavoriteSuccess,
   UNPICK_ITEM_AS_FAVORITE_FAILURE,
   UNPICK_ITEM_AS_FAVORITE_REQUEST,
-  UNPICK_ITEM_AS_FAVORITE_SUCCESS
+  UNPICK_ITEM_AS_FAVORITE_SUCCESS,
+  fetchListsRequest,
+  FETCH_LISTS_REQUEST,
+  FETCH_LISTS_SUCCESS,
+  FETCH_LISTS_FAILURE,
+  fetchListsFailure,
+  fetchListsSuccess,
+  deleteListRequest,
+  DELETE_LIST_REQUEST,
+  deleteListFailure,
+  DELETE_LIST_FAILURE,
+  DELETE_LIST_SUCCESS,
+  deleteListSuccess,
+  GET_LIST_FAILURE,
+  GET_LIST_REQUEST,
+  GET_LIST_SUCCESS,
+  getListFailure,
+  getListRequest,
+  getListSuccess,
+  UPDATE_LIST_FAILURE,
+  UPDATE_LIST_REQUEST,
+  UPDATE_LIST_SUCCESS,
+  updateListFailure,
+  updateListRequest,
+  updateListSuccess,
+  CREATE_LIST_REQUEST,
+  CREATE_LIST_FAILURE,
+  CREATE_LIST_SUCCESS,
+  createListFailure,
+  createListRequest,
+  createListSuccess,
+  CREATE_LIST_CLEAR,
+  createListClear
 } from './actions'
-import { FavoritedItemIds } from './types'
+import { CreateListParameters, List, ListsBrowseOptions } from './types'
 
 const itemBrowseOptions: ItemBrowseOptions = {
   view: View.LISTS,
   page: 0
+}
+
+const listsBrowseOptions: ListsBrowseOptions = {
+  page: 1,
+  first: 10
 }
 
 const item = {
@@ -45,8 +88,46 @@ const item = {
   network: Network.ETHEREUM
 } as Item
 
-const itemIds: FavoritedItemIds = [{ itemId: item.id }]
-const total = itemIds.length
+const list: List = {
+  id: 'aListId',
+  name: 'aListName',
+  description: 'aDescription',
+  userAddress: 'anOwnerAddress',
+  itemsCount: 1,
+  createdAt: Date.now(),
+  permission: Permission.VIEW
+}
+
+const listOfLists: ListOfLists = {
+  id: 'aListId',
+  name: 'aListName',
+  itemsCount: 1,
+  previewOfItemIds: [item.id]
+}
+
+const createList: CreateListParameters = {
+  name: 'aListName',
+  description: 'aDescription',
+  isPrivate: true
+}
+
+const createOrUpdateList: UpdateOrCreateList = {
+  id: 'aListId',
+  name: 'aListName',
+  description: 'aDescription',
+  userAddress: 'anOwnerAddress',
+  createdAt: Date.now(),
+  updatedAt: null,
+  permission: Permission.VIEW
+}
+
+const listDetails: ListDetails = {
+  ...createOrUpdateList,
+  itemsCount: 1
+}
+
+const createdAt: Record<string, number> = { [item.id]: Date.now() }
+const total = 1
 
 const anErrorMessage = 'An error'
 
@@ -158,22 +239,28 @@ describe('when creating the action to signal a failure in the undo unpicking ite
 
 describe('when creating the action to signal the start of the fetch favorited items request', () => {
   it('should return an object representing the action', () => {
-    expect(fetchFavoritedItemsRequest(itemBrowseOptions)).toEqual({
+    expect(fetchFavoritedItemsRequest(itemBrowseOptions, true)).toEqual({
       type: FETCH_FAVORITED_ITEMS_REQUEST,
       meta: undefined,
-      payload: itemBrowseOptions
+      payload: { options: itemBrowseOptions, forceLoadMore: true }
     })
   })
 })
 
 describe('when creating the action to signal a successful fetch favorited items request', () => {
   it('should return an object representing the action', () => {
-    expect(fetchFavoritedItemsSuccess(itemIds, total)).toEqual({
+    expect(
+      fetchFavoritedItemsSuccess([item], createdAt, total, {}, 0, true)
+    ).toEqual({
       type: FETCH_FAVORITED_ITEMS_SUCCESS,
       meta: undefined,
       payload: {
-        itemIds,
-        total
+        items: [item],
+        options: {},
+        createdAt,
+        total,
+        timestamp: 0,
+        forceLoadMore: true
       }
     })
   })
@@ -185,6 +272,173 @@ describe('when creating the action to signal a failure in the fetch favorited it
       type: FETCH_FAVORITED_ITEMS_FAILURE,
       meta: undefined,
       payload: { error: anErrorMessage }
+    })
+  })
+})
+
+describe('when creating the action to signal the start of the fetch lists request', () => {
+  it('should return an object representing the action', () => {
+    expect(fetchListsRequest(listsBrowseOptions)).toEqual({
+      type: FETCH_LISTS_REQUEST,
+      meta: undefined,
+      payload: { options: listsBrowseOptions }
+    })
+  })
+})
+
+describe('when creating the action to signal a failure in the fetch lists request', () => {
+  it('should return an object representing the action', () => {
+    expect(fetchListsFailure(anErrorMessage)).toEqual({
+      type: FETCH_LISTS_FAILURE,
+      meta: undefined,
+      payload: { error: anErrorMessage }
+    })
+  })
+})
+
+describe('when creating the action to signal a successful fetch lists request', () => {
+  it('should return an object representing the action', () => {
+    expect(
+      fetchListsSuccess([listOfLists], [item], total, listsBrowseOptions)
+    ).toEqual({
+      type: FETCH_LISTS_SUCCESS,
+      meta: undefined,
+      payload: {
+        lists: [listOfLists],
+        items: [item],
+        total,
+        options: listsBrowseOptions
+      }
+    })
+  })
+})
+
+describe('when creating the action to signal the start of the delete list request', () => {
+  it('should return an object representing the action', () => {
+    expect(deleteListRequest(list)).toEqual({
+      type: DELETE_LIST_REQUEST,
+      meta: undefined,
+      payload: { list }
+    })
+  })
+})
+
+describe('when creating the action to signal a failure in the delete list request', () => {
+  it('should return an object representing the action', () => {
+    expect(deleteListFailure(list, anErrorMessage)).toEqual({
+      type: DELETE_LIST_FAILURE,
+      meta: undefined,
+      payload: { list, error: anErrorMessage }
+    })
+  })
+})
+
+describe('when creating the action to signal a successful delete list request', () => {
+  it('should return an object representing the action', () => {
+    expect(deleteListSuccess(list)).toEqual({
+      type: DELETE_LIST_SUCCESS,
+      meta: undefined,
+      payload: { list }
+    })
+  })
+})
+
+describe('when creating the action to signal the start of the get list request', () => {
+  it('should return an object representing the action', () => {
+    expect(getListRequest(list.id)).toEqual({
+      type: GET_LIST_REQUEST,
+      meta: undefined,
+      payload: { id: list.id }
+    })
+  })
+})
+
+describe('when creating the action to signal a failure in the get list request', () => {
+  it('should return an object representing the action', () => {
+    expect(getListFailure(list.id, anErrorMessage)).toEqual({
+      type: GET_LIST_FAILURE,
+      meta: undefined,
+      payload: { id: list.id, error: anErrorMessage }
+    })
+  })
+})
+
+describe('when creating the action to signal a successful get list request', () => {
+  it('should return an object representing the action', () => {
+    expect(getListSuccess(listDetails)).toEqual({
+      type: GET_LIST_SUCCESS,
+      meta: undefined,
+      payload: { list: listDetails }
+    })
+  })
+})
+
+describe('when creating the action to signal the start of the update list request', () => {
+  it('should return an object representing the action', () => {
+    expect(updateListRequest(list.id, list)).toEqual({
+      type: UPDATE_LIST_REQUEST,
+      meta: undefined,
+      payload: { id: list.id, updatedList: list }
+    })
+  })
+})
+
+describe('when creating the action to signal a failure in the update list request', () => {
+  it('should return an object representing the action', () => {
+    expect(updateListFailure(list.id, anErrorMessage)).toEqual({
+      type: UPDATE_LIST_FAILURE,
+      meta: undefined,
+      payload: { id: list.id, error: anErrorMessage }
+    })
+  })
+})
+
+describe('when creating the action to signal a successful update list request', () => {
+  it('should return an object representing the action', () => {
+    expect(updateListSuccess(createOrUpdateList)).toEqual({
+      type: UPDATE_LIST_SUCCESS,
+      meta: undefined,
+      payload: { list: createOrUpdateList }
+    })
+  })
+})
+
+describe('when creating the action to signal the start of the create list request', () => {
+  it('should return an object representing the action', () => {
+    expect(createListRequest(createList)).toEqual({
+      type: CREATE_LIST_REQUEST,
+      meta: undefined,
+      payload: createList
+    })
+  })
+})
+
+describe('when creating the action to signal a failure in the create list request', () => {
+  it('should return an object representing the action', () => {
+    expect(createListFailure(anErrorMessage)).toEqual({
+      type: CREATE_LIST_FAILURE,
+      meta: undefined,
+      payload: { error: anErrorMessage }
+    })
+  })
+})
+
+describe('when creating the action to signal a successful create list request', () => {
+  it('should return an object representing the action', () => {
+    expect(createListSuccess(createOrUpdateList)).toEqual({
+      type: CREATE_LIST_SUCCESS,
+      meta: undefined,
+      payload: { list: createOrUpdateList }
+    })
+  })
+})
+
+describe('when creating the action to signal a create list clear', () => {
+  it('should return an object representing the action', () => {
+    expect(createListClear()).toEqual({
+      type: CREATE_LIST_CLEAR,
+      meta: undefined,
+      payload: undefined
     })
   })
 })
