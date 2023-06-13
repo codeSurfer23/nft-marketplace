@@ -62,7 +62,7 @@ export const LocationFilter = ({
       return t('nft_filters.all_locations')
     }
 
-    let locationTexts = []
+    let locationTexts:string[] = []
     if (adjacentToRoad) {
       locationTexts.push(t('nft_filters.adjacent_to_road'))
     }

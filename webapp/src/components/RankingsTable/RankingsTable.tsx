@@ -11,7 +11,11 @@ import {
   DropdownProps,
   Mobile
 } from 'decentraland-ui'
-import { EmoteCategory, Rarity, WearableCategory } from '@dcl/schemas'
+import { 
+  // EmoteCategory,
+  //  Rarity
+  // , WearableCategory 
+} from '@dcl/schemas'
 import { T, t } from 'decentraland-dapps/dist/modules/translation/utils'
 import {
   AnalyticsTimeframe,
@@ -124,11 +128,11 @@ const RankingsTable = (props: Props) => {
               direction="right"
               options={[
                 ALL_FILTER,
-                ...Object.values(
-                  currentEntity === RankingEntities.EMOTES
-                    ? EmoteCategory.schema.enum
-                    : WearableCategory.schema.enum
-                )
+                // ...Object.values(
+                //   currentEntity === RankingEntities.EMOTES
+                //     ? EmoteCategory.schema.enum
+                //     : WearableCategory.schema.enum
+                // )
               ].map(category => ({
                 value: category as string,
                 text:
@@ -148,7 +152,10 @@ const RankingsTable = (props: Props) => {
               defaultValue={ALL_FILTER}
               value={currentFilters.rarity || ALL_FILTER}
               direction="right"
-              options={[ALL_FILTER, ...Object.values(Rarity.schema.enum)].map(
+              options={[ALL_FILTER,
+                //  ...Object.values(Rarity.schema.enum
+                 // )
+                ].map(
                 rarity => ({
                   value: rarity as string,
                   text:

@@ -135,7 +135,7 @@ const BuyNFTModal = (props: Props) => {
     'page'
   ]).join('_')
 
-  let subtitle = null
+  let subtitle = <></>
   if (!order) {
     subtitle = (
       <T id={`${translationPageDescriptorId}.not_for_sale`} values={{ name }} />

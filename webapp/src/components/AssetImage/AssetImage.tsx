@@ -232,7 +232,7 @@ const AssetImage = (props: Props) => {
     }
 
     case NFTCategory.WEARABLE: {
-      let wearablePreview = null
+      let wearablePreview = <></>
 
       if (isDraggable) {
         let itemId: string | undefined
@@ -404,7 +404,7 @@ const AssetImage = (props: Props) => {
     }
 
     case NFTCategory.EMOTE: {
-      let wearablePreview = null
+      let wearablePreview =<></>
       let itemId: string | undefined
       let tokenId: string | undefined
       if ('itemId' in asset && asset.itemId) {

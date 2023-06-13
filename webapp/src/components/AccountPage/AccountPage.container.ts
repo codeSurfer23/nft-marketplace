@@ -1,6 +1,5 @@
 import { connect } from 'react-redux'
 import { replace } from 'connected-react-router'
-
 import { RootState } from '../../modules/reducer'
 import {
   getIsFullscreen,

@@ -176,7 +176,7 @@ const Atlas: React.FC<Props> = (props: Props) => {
     () => new Map([...userTiles].concat([...userRentedTiles])),
     [userRentedTiles, userTiles]
   )
-
+     // @ts-ignore
   const userLayer: Layer = useCallback(
     (x: number, y: number) => {
       const tile = allUserTiles.get(getCoords(x, y))

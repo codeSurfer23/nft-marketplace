@@ -55,7 +55,11 @@ const NFTFilters = (props: Props) => {
   const [showFiltersMenu, setShowFiltersMenu] = useState(false)
   const [showFiltersModal, setShowFiltersModal] = useState(false)
 
-  let orderByDropdownOptions = undefined
+  interface IDrop  { 
+    value: SortBy;
+     text: string;
+   }
+  let orderByDropdownOptions:IDrop[] =[]
   if (onlyOnRent) {
     orderByDropdownOptions = [
       {

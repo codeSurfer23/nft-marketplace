@@ -5,7 +5,7 @@ import {
   getAddress as baseGetAddress,
   getNetworks
 } from 'decentraland-dapps/dist/modules/wallet/selectors'
-import { Wallet } from 'decentraland-dapps/dist/modules/wallet/types'
+// import { Wallet } from 'decentraland-dapps/dist/modules/wallet/types'
 import { RootState } from '../reducer'
 
 export * from 'decentraland-dapps/dist/modules/wallet/selectors'

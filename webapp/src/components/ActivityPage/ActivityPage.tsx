@@ -31,7 +31,7 @@ const ActivityPage = (props: Props) => {
     setShowConfirmation
   ])
 
-  let content = null
+  let content = <></>
 
   if (transactions.length === 0) {
     content = (

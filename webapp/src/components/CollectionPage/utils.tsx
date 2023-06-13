@@ -64,6 +64,7 @@ export const formatDataToTable = (
                 className={styles.ellipsis}
                 icon="ellipsis horizontal"
                 direction="left"
+                defaultValues = {[]}
               >
                 <Dropdown.Menu>
                   <Dropdown.Item

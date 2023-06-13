@@ -119,7 +119,7 @@ const MintItemModal = (props: Props) => {
     'page'
   ]).join('_')
 
-  let subtitle = null
+  let subtitle = <></>
   if (!item.isOnSale) {
     subtitle = (
       <T
