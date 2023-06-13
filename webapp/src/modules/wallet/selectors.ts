@@ -10,13 +10,18 @@ import { RootState } from '../reducer'
 
 export * from 'decentraland-dapps/dist/modules/wallet/selectors'
 
-export const getWallet = createSelector<
-  RootState,
-  Wallet | null,
-  Wallet | null
->(getData, wallet =>
-  wallet ? { ...wallet, address: wallet.address.toLowerCase() } : null
-)
+// export const getWallet = createSelector<RootState, Wallet | null>(
+//   getData,
+//   wallet =>
+//     wallet ? { ...wallet, address: wallet.address.toLowerCase() } : null
+// )
+
+export const getWallet = (state: RootState) => {
+  const data = createSelector(getData, wallet =>
+    wallet ? { ...wallet, address: wallet.address.toLowerCase() } : null
+  )
+  return data(state)
+}
 
 export const getAddress = (state: RootState) => {
   const address = baseGetAddress(state)

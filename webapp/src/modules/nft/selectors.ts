@@ -20,31 +20,42 @@ const nftDetailMatchSelector = createMatchSelector<
   }
 >(locations.nft(':contractAddress', ':tokenId'))
 
-export const getContractAddress = createSelector<
-  RootState,
-  ReturnType<typeof nftDetailMatchSelector>,
-  string | null
->(
-  nftDetailMatchSelector,
-  match => match?.params.contractAddress.toLowerCase() || null
-)
+// <
+//   RootState,
+//   ReturnType<typeof nftDetailMatchSelector>,
+//   string | null
+// >
+export const getContractAddress = state => {
+  const info = createSelector(
+    nftDetailMatchSelector,
+    match => match?.params.contractAddress.toLowerCase() || null
+  )
 
-export const getTokenId = createSelector<
-  RootState,
-  ReturnType<typeof nftDetailMatchSelector>,
-  string | null
->(nftDetailMatchSelector, match => match?.params.tokenId || null)
+  return info(state)
+}
 
-export const getCurrentNFT = createSelector<
-  RootState,
-  string | null,
-  string | null,
-  NFTState['data'],
-  NFT | null
->(
+// <
+//   RootState,
+//   ReturnType<typeof nftDetailMatchSelector>,
+//   string | null
+// >
+export const getTokenId = state =>
+  createSelector(
+    nftDetailMatchSelector,
+    match => match?.params.tokenId || null
+  )(state)
+
+// <
+//   RootState,
+//   string | null,
+//   string | null,
+//   NFTState['data'],
+//   NFT | null
+// >
+export const getCurrentNFT = createSelector(
   state => getContractAddress(state),
   state => getTokenId(state),
-  state => getData(state),
+  (state: RootState) => getData(state),
   (contractAddress, tokenId, nfts) => getNFT(contractAddress, tokenId, nfts)
 )
 
